@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Movie Ticket Booking System</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+
+background:linear-gradient(135deg,#141E30,#243B55);
+min-height:100vh;
+padding:40px;
+}
+
+.container{
+
+width:95%;
+max-width:1100px;
+margin:auto;
+background:white;
+border-radius:15px;
+overflow:hidden;
+box-shadow:0 10px 30px rgba(0,0,0,.4);
+
+}
+
+.header{
+
+background:#0d47a1;
+padding:20px;
+color:white;
+text-align:center;
+font-size:30px;
+font-weight:bold;
+
+}
+
+.content{
+
+display:grid;
+grid-template-columns:350px auto;
+gap:30px;
+padding:30px;
+
+}
+
+.card{
+
+background:#f7f9fc;
+padding:20px;
+border-radius:10px;
+box-shadow:0 2px 8px rgba(0,0,0,.15);
+
+}
+
+.card h2{
+
+margin-bottom:20px;
+color:#0d47a1;
+
+}
+
+input,select{
+
+width:100%;
+padding:12px;
+margin-top:10px;
+margin-bottom:18px;
+border:1px solid #ccc;
+border-radius:6px;
+font-size:15px;
+
+}
+
+button{
+
+width:100%;
+padding:13px;
+background:#0d47a1;
+color:white;
+border:none;
+border-radius:6px;
+font-size:16px;
+cursor:pointer;
+transition:.3s;
+
+}
+
+button:hover{
+
+background:#1565c0;
+
+}
+
+table{
+
+width:100%;
+border-collapse:collapse;
+
+}
+
+table th{
+
+background:#0d47a1;
+color:white;
+padding:12px;
+
+}
+
+table td{
+
+padding:12px;
+text-align:center;
+border-bottom:1px solid #ddd;
+
+}
+
+tr:nth-child(even){
+
+background:#f3f6fa;
+
+}
+
+.deleteBtn{
+
+background:red;
+padding:8px 14px;
+border:none;
+color:white;
+border-radius:5px;
+cursor:pointer;
+
+}
+
+.deleteBtn:hover{
+
+background:darkred;
+
+}
+
+.message{
+
+margin-top:15px;
+text-align:center;
+font-weight:bold;
+color:green;
+
+}
+
+.total{
+
+margin-top:20px;
+font-size:20px;
+font-weight:bold;
+color:#0d47a1;
+
+}
+
+@media(max-width:850px){
+
+.content{
+
+grid-template-columns:1fr;
+
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+
+🎬 Movie Ticket Booking System
+
+</div>
+
+<div class="content">
+
+<div class="card">
+
+<h2>Book Ticket</h2>
+
+<input type="text" id="customerName" placeholder="Customer Name">
+
+<select id="movieName">
+
+<option>Avengers</option>
+<option>Avatar</option>
+<option>Pushpa 2</option>
+<option>KGF 2</option>
+<option>Leo</option>
+
+</select>
+
+<select id="showTime">
+
+<option>10 AM</option>
+<option>1 PM</option>
+<option>4 PM</option>
+<option>6 PM</option>
+<option>9 PM</option>
+
+</select>
+
+<input type="text" id="seatNumber" placeholder="Seat Number (A1)">
+
+<button onclick="bookTicket()">Book Ticket</button>
+
+<div class="message" id="msg"></div>
+
+</div>
+
+<div class="card">
+
+<h2>Booked Tickets</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Seat</th>
+<th>Customer</th>
+<th>Movie</th>
+<th>Show</th>
+<th>Delete</th>
+
+</tr>
+
+</thead>
+
+<tbody id="tableData">
+
+</tbody>
+
+</table>
+
+<div class="total">
+
+Total Bookings :
+<span id="count">0</span>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const API="https://3wict44n53.execute-api.ap-south-1.amazonaws.com/movieticketbooking/ticket";
+
+async function bookTicket(){
+
+const customerName=document.getElementById("customerName").value;
+const movieName=document.getElementById("movieName").value;
+const showTime=document.getElementById("showTime").value;
+const seatNumber=document.getElementById("seatNumber").value.toUpperCase();
+
+const res=await fetch(API,{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+customerName,
+movieName,
+showTime,
+seatNumber
+})
+});
+
+const data=await res.json();
+
+document.getElementById("msg").innerHTML=data.message;
+
+loadTickets();
+
+}
+
+async function loadTickets(){
+
+const res=await fetch(API);
+
+const data=await res.json();
+
+let rows="";
+
+data.forEach(ticket=>{
+
+rows+=`
+
+<tr>
+
+<td>${ticket.seatNumber}</td>
+<td>${ticket.customerName}</td>
+<td>${ticket.movieName}</td>
+<td>${ticket.showTime}</td>
+
+<td>
+
+<button class="deleteBtn"
+
+onclick="deleteTicket('${ticket.seatNumber}')">
+
+Delete
+
+</button>
+
+</td>
+
+</tr>
+
+`;
+
+});
+
+document.getElementById("tableData").innerHTML=rows;
+
+document.getElementById("count").innerHTML=data.length;
+
+}
+
+async function deleteTicket(seat){
+
+await fetch(API,{
+
+method:"DELETE",
+
+headers:{
+
+"Content-Type":"application/json"
+
+},
+
+body:JSON.stringify({
+
+seatNumber:seat
+
+})
+
+});
+
+loadTickets();
+
+}
+
+loadTickets();
+
+</script>
+
+</body>
+</html>
